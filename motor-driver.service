@@ -1,0 +1,15 @@
+[Unit]
+Description=Motor driver program
+After=dnsmasq
+After=hostapd
+Wants=dnsmasq
+Wants=hostapd
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/daemon \
+User=root
+ExecReload=/bin/kill -HUP $MAINPID
+
+[Install]
+WantedBy=multi-user.target
