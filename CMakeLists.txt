@@ -10,6 +10,9 @@ include_directories(${PROJECT_SOURCE_DIR}/include)
 file(GLOB sources ${PROJECT_SOURCE_DIR}/src/*.cpp)
 file(GLOB headers ${PROJECT_SOURCE_DIR}/include/*.hpp)
 
-add_executable(motor-driver ${sources} ${headers})
+add_executable(${PROJECT_NAME} ${sources} ${headers})
 
-TARGET_LINK_LIBRARIES( motor-driver LINK_PUBLIC ${Boost_LIBRARIES} )
+TARGET_LINK_LIBRARIES( ${PROJECT_NAME} ${Boost_LIBRARIES} pthread)
+
+install(TARGETS ${PROJECT_NAME} DESTINATION bin)
+
