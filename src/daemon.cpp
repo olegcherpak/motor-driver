@@ -1,3 +1,5 @@
+#define BLASTER "/dev/pi-blaster"
+
 #include "Driver.hpp"
 #include <cstdlib>
 #include <iostream>
@@ -6,19 +8,20 @@
 
 int main(int argc, char* argv[])
 {
+    std::ofstream myfile;
+    myfile.open(BLASTER);
     try
     {
 
         boost::asio::io_service io_service;
-
-        Driver s(io_service, 3003);
-
+        Driver platform(io_service, Driver::platformPort, myfile);
+        Driver camera(io_service, Driver::cameraPort, myfile);
         io_service.run();
     }
     catch (std::exception& e)
     {
         std::cerr << "Exception: " << e.what() << "\n";
     }
-
+    myfile.close();
     return 0;
 }

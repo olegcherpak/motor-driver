@@ -1,25 +1,15 @@
-#define BLASTER "/dev/pi-blaster"
-
 #include "Driver.hpp"
 #include <cstdlib>
 #include <iostream>
 #include <fstream>
 #include <boost/asio.hpp>
-#include <boost/property_tree/ptree.hpp>
-#include <boost/property_tree/json_parser.hpp>
 
-namespace pt = boost::property_tree;
 using boost::asio::ip::udp;
 
-Driver::Driver(boost::asio::io_service& io_service, short port)
-    : socket_(io_service, udp::endpoint(udp::v4(), port))
+Driver::Driver(boost::asio::io_service& io_service, short port, std::ofstream& myfile)
+    : socket_(io_service, udp::endpoint(udp::v4(), port)), port_(port), myfile_(myfile)
 {
-    myfile.open(BLASTER);
     do_receive();
-}
-Driver::~Driver()
-{
-    myfile.close();
 }
 
 void Driver::do_receive()
@@ -30,29 +20,38 @@ void Driver::do_receive()
         {
         if (!ec && bytes_recvd > 0)
         {
-            do_write(bytes_recvd);
+            if (port_ == platformPort)
+            {
+                do_write_platform(bytes_recvd);
+            } else {
+                do_write_camera(bytes_recvd);
+            }
+            
         }
         do_receive();
         });
 }
 
-void Driver::do_write(std::size_t length)
+void Driver::do_write_platform(std::size_t length)
 {
-    parse_json(length);
-    
-    myfile  << M1    << "=" << root.get<short>("M1")   << "; "
-            << M2    << "=" << root.get<short>("M2")   << "; "
-            << PWMA  << "=" << root.get<float>("PWMA") << "; "
-            << M3    << "=" << root.get<short>("M3")   << "; "
-            << M4    << "=" << root.get<short>("M4")   << "; "
-            << PWMB  << "=" << root.get<float>("PWMB") << "; "
-            << CAMX  << "=" << root.get<float>("CAMX") << "; "
-            << CAMY  << "=" << root.get<float>("CAMY") << std::flush;
+    unsigned short m1 = (data_[0] >> 1) & 1;
+    unsigned short m2 = data_[0] & 1;
+    unsigned short m3 = (data_[1] >> 1) & 1;
+    unsigned short m4 = data_[1] & 1;
+    unsigned short pwma = data_[0] >> 2;
+    unsigned short pwmb = data_[1] >> 2;
+
+    myfile_ << M1    << "=" << m1           << "; "
+            << M2    << "=" << m2           << "; "
+            << PWMA  << "=" << pwma/63.    << "; "
+            << M3    << "=" << m3           << "; "
+            << M4    << "=" << m4           << "; "
+            << PWMB  << "=" << pwmb/63.    << std::flush;
 }
 
-void Driver::parse_json(std::size_t length)
+void Driver::do_write_camera(std::size_t length)
 {
-    data_[length++] = 0;
-    std::istringstream is(data_);
-    pt::read_json(is, root);
+
+    myfile_ << CAMX  << "=" << data_[0] / 1000. << "; "
+            << CAMY  << "=" << data_[1] / 1000. << std::flush;
 }
