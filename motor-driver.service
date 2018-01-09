@@ -7,7 +7,7 @@ Wants=hostapd
 
 [Service]
 Type=simple
-ExecStart=/usr/bin/daemon \
+ExecStart=/usr/bin/motor-driver \
 User=root
 ExecReload=/bin/kill -HUP $MAINPID
 
